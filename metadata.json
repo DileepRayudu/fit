@@ -1,0 +1,6 @@
+{
+  "name": "Fit Chart Generator",
+  "description": "AI-Powered Dynamic Size & Fit Chart Generator for Apparel Sellers using Computer Vision, Tech Pack NLP, and Bayesian Body-Metrics Estimation.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
