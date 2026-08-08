@@ -120,3 +120,20 @@ export interface DatasetSample {
   keyFeatures: string[];
   sampleRecord: Record<string, any>;
 }
+
+export interface UserProfile {
+  id: string;
+  name: string;
+  email: string;
+  role: 'seller' | 'shopper';
+  brandName?: string;
+  avatarUrl?: string;
+  createdAt?: string;
+  savedSizes?: {
+    heightCm?: number;
+    weightKg?: number;
+    chestCm?: number;
+    waistCm?: number;
+    preferredFit?: string;
+  };
+}

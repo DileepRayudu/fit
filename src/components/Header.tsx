@@ -1,6 +1,6 @@
 import React from 'react';
-import { Shirt, Sparkles, Database, Cpu, Presentation, Gauge, CheckCircle2 } from 'lucide-react';
-import { TechPackSpec } from '../types';
+import { Shirt, Sparkles, Database, Cpu, Presentation, Gauge, User, LogIn } from 'lucide-react';
+import { TechPackSpec, UserProfile } from '../types';
 
 interface HeaderProps {
   activeTab: 'seller' | 'customer' | 'datasets' | 'architecture' | 'demo';
@@ -8,6 +8,8 @@ interface HeaderProps {
   skus: TechPackSpec[];
   selectedSkuId: string;
   setSelectedSkuId: (id: string) => void;
+  currentUser: UserProfile | null;
+  onOpenAuthModal: () => void;
 }
 
 export const Header: React.FC<HeaderProps> = ({
@@ -15,7 +17,9 @@ export const Header: React.FC<HeaderProps> = ({
   setActiveTab,
   skus,
   selectedSkuId,
-  setSelectedSkuId
+  setSelectedSkuId,
+  currentUser,
+  onOpenAuthModal,
 }) => {
   const currentSku = skus.find(s => s.skuId === selectedSkuId) || skus[0];
 
@@ -67,7 +71,36 @@ export const Header: React.FC<HeaderProps> = ({
             <span className="text-slate-400 text-[10px]">(Goal: &lt;150 ms)</span>
           </div>
 
+          {/* User Auth Profile / Login Button */}
+          <div>
+            {currentUser ? (
+              <button
+                onClick={onOpenAuthModal}
+                className="flex items-center space-x-2 bg-slate-800 hover:bg-slate-700 border border-slate-700 text-white text-xs font-bold px-3 py-1.5 rounded-xl transition-all shadow-sm"
+              >
+                <img
+                  src={currentUser.avatarUrl || `https://ui-avatars.com/api/?name=${encodeURIComponent(currentUser.name)}`}
+                  alt={currentUser.name}
+                  className="w-5 h-5 rounded-full object-cover border border-indigo-400"
+                />
+                <span className="hidden sm:inline">{currentUser.name.split(' ')[0]}</span>
+                <span className="text-[10px] bg-indigo-500/30 text-indigo-300 px-1.5 py-0.2 rounded uppercase">
+                  {currentUser.role}
+                </span>
+              </button>
+            ) : (
+              <button
+                onClick={onOpenAuthModal}
+                className="flex items-center space-x-1.5 bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold px-3.5 py-1.5 rounded-xl transition-all shadow-md"
+              >
+                <LogIn className="w-3.5 h-3.5" />
+                <span>Sign In / Register</span>
+              </button>
+            )}
+          </div>
+
         </div>
+
 
         {/* Navigation Tabs */}
         <div className="flex space-x-1 overflow-x-auto no-scrollbar border-t border-slate-800/60 pt-2 pb-2">

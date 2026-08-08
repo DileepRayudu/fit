@@ -5,8 +5,9 @@ import { CustomerFitAssistant } from './components/CustomerFitAssistant';
 import { DatasetsExplorer } from './components/DatasetsExplorer';
 import { ArchitectureRoi } from './components/ArchitectureRoi';
 import { PitchDemoHub } from './components/PitchDemoHub';
+import { AuthModal } from './components/AuthModal';
 
-import { TechPackSpec, LocalizedSizeChart, DatasetSample } from './types';
+import { TechPackSpec, LocalizedSizeChart, DatasetSample, UserProfile } from './types';
 import { MOCK_SKUS, MOCK_DATASETS } from './data/mockSkus';
 
 export default function App() {
@@ -20,7 +21,34 @@ export default function App() {
   const [datasets, setDatasets] = useState<DatasetSample[]>(MOCK_DATASETS);
   const [isAnalyzing, setIsAnalyzing] = useState<boolean>(false);
 
+  // Authentication State
+  const [currentUser, setCurrentUser] = useState<UserProfile | null>(null);
+  const [isAuthModalOpen, setIsAuthModalOpen] = useState<boolean>(false);
+
   const currentSku = skus.find(s => s.skuId === selectedSkuId) || skus[0];
+
+  // Check auth session on startup
+  useEffect(() => {
+    const checkAuthSession = async () => {
+      const token = localStorage.getItem('fit_chart_token');
+      if (token) {
+        try {
+          const res = await fetch('/api/auth/me', {
+            headers: { Authorization: `Bearer ${token}` }
+          });
+          if (res.ok) {
+            const data = await res.json();
+            if (data.user) {
+              setCurrentUser(data.user);
+            }
+          }
+        } catch (err) {
+          console.error("Session check error:", err);
+        }
+      }
+    };
+    checkAuthSession();
+  }, []);
 
   // Fetch SKU details & Localized charts
   const fetchSkuDetails = async (skuId: string) => {
@@ -82,6 +110,8 @@ export default function App() {
         skus={skus}
         selectedSkuId={selectedSkuId}
         setSelectedSkuId={setSelectedSkuId}
+        currentUser={currentUser}
+        onOpenAuthModal={() => setIsAuthModalOpen(true)}
       />
 
       {/* Main Content Area */}
@@ -117,6 +147,14 @@ export default function App() {
         )}
       </main>
 
+      {/* Authentication Modal */}
+      <AuthModal
+        isOpen={isAuthModalOpen}
+        onClose={() => setIsAuthModalOpen(false)}
+        currentUser={currentUser}
+        onUserChange={(user) => setCurrentUser(user)}
+      />
+
       {/* Footer */}
       <footer className="bg-slate-900 border-t border-slate-800 text-slate-400 text-xs py-6 mt-auto">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row items-center justify-between gap-4">
@@ -136,3 +174,4 @@ export default function App() {
     </div>
   );
 }
+

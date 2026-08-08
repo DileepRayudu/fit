@@ -104,6 +104,114 @@ async function startServer() {
   });
 
   // ==========================================
+  // AUTHENTICATION API ROUTES (In-Memory + Session)
+  // ==========================================
+  const usersDb: Record<string, any> = {
+    "seller@zara.com": {
+      id: "usr_zara_01",
+      name: "Zara Merchandising Team",
+      email: "seller@zara.com",
+      password: "password123",
+      role: "seller",
+      brandName: "Zara Apparel",
+      avatarUrl: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=120&q=80",
+      createdAt: new Date().toISOString()
+    },
+    "shopper@demo.com": {
+      id: "usr_shopper_02",
+      name: "Alex Rivera",
+      email: "shopper@demo.com",
+      password: "password123",
+      role: "shopper",
+      brandName: "",
+      avatarUrl: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=120&q=80",
+      createdAt: new Date().toISOString(),
+      savedSizes: {
+        heightCm: 176,
+        weightKg: 72,
+        chestCm: 98,
+        waistCm: 84,
+        preferredFit: "regular"
+      }
+    }
+  };
+
+  const sessionsDb: Record<string, any> = {};
+
+  app.post("/api/auth/signin", (req, res) => {
+    const { email, password } = req.body;
+    if (!email || !password) {
+      return res.status(400).json({ error: "Email and password are required" });
+    }
+
+    const user = usersDb[email.toLowerCase()];
+    if (!user || user.password !== password) {
+      return res.status(401).json({ error: "Invalid email or password" });
+    }
+
+    const token = "tok_" + Math.random().toString(36).substring(2) + Date.now().toString(36);
+    const { password: _, ...userWithoutPassword } = user;
+    sessionsDb[token] = userWithoutPassword;
+
+    res.json({
+      success: true,
+      token,
+      user: userWithoutPassword
+    });
+  });
+
+  app.post("/api/auth/signup", (req, res) => {
+    const { name, email, password, role, brandName } = req.body;
+    if (!name || !email || !password) {
+      return res.status(400).json({ error: "Name, email and password are required" });
+    }
+
+    const lowerEmail = email.toLowerCase();
+    if (usersDb[lowerEmail]) {
+      return res.status(400).json({ error: "An account with this email already exists" });
+    }
+
+    const newUser = {
+      id: "usr_" + Math.random().toString(36).substring(2, 9),
+      name,
+      email: lowerEmail,
+      password,
+      role: role || "shopper",
+      brandName: brandName || (role === "seller" ? "Independent Fashion Brand" : ""),
+      avatarUrl: `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&background=6366f1&color=fff`,
+      createdAt: new Date().toISOString()
+    };
+
+    usersDb[lowerEmail] = newUser;
+
+    const token = "tok_" + Math.random().toString(36).substring(2) + Date.now().toString(36);
+    const { password: _, ...userWithoutPassword } = newUser;
+    sessionsDb[token] = userWithoutPassword;
+
+    res.json({
+      success: true,
+      token,
+      user: userWithoutPassword
+    });
+  });
+
+  app.post("/api/auth/signout", (req, res) => {
+    const token = req.headers.authorization?.replace("Bearer ", "");
+    if (token && sessionsDb[token]) {
+      delete sessionsDb[token];
+    }
+    res.json({ success: true, message: "Signed out successfully" });
+  });
+
+  app.get("/api/auth/me", (req, res) => {
+    const token = req.headers.authorization?.replace("Bearer ", "");
+    if (token && sessionsDb[token]) {
+      return res.json({ user: sessionsDb[token] });
+    }
+    res.status(401).json({ error: "Unauthenticated" });
+  });
+
+  // ==========================================
   // VITE MIDDLEWARE & STATIC ASSET HANDLING
   // ==========================================
   if (process.env.NODE_ENV !== "production") {
